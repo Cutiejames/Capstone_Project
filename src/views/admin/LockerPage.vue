@@ -7,56 +7,20 @@
       <div><span class="dot bg-success"></span> AVAILABLE</div>
     </div>
 
-    <!-- Filter Icon (Placeholder) -->
-    <div class="text-end mb-2">
-      <i class="bi bi-sliders"></i>
-    </div>
-
     <!-- Locker Grid -->
     <div class="row">
-      <!-- Column A -->
-      <div class="col-6">
-        <h5 class="text-center fw-bold mb-3">A</h5>
-        <div class="row row-cols-4 g-3">
-          <div
-            v-for="locker in lockersA"
-            :key="locker.id"
-            class="col text-center"
-          >
-            <div class="card shadow-sm">
-              <div class="card-body p-2">
-                <i class="bi bi-hdd-stack-fill fs-3"></i>
-                <div class="fw-bold">{{ locker.id }}</div>
-                <span
-                  class="status-dot"
-                  :class="statusColor(locker.status)"
-                ></span>
-              </div>
-            </div>
+      <div
+        v-for="locker in paginatedLockers"
+        :key="locker.locker_id"
+        class="col-2 mb-4 d-flex justify-content-center"
+      >
+        <div class="locker-wrapper" @click="openLocker(locker)">
+          <div class="locker-card">
+            <!-- locker image -->
+            <img :src="lockerIcon" alt="Locker" class="locker-icon" />
           </div>
-        </div>
-      </div>
-
-      <!-- Column B -->
-      <div class="col-6">
-        <h5 class="text-center fw-bold mb-3">B</h5>
-        <div class="row row-cols-4 g-3">
-          <div
-            v-for="locker in lockersB"
-            :key="locker.id"
-            class="col text-center"
-          >
-            <div class="card shadow-sm">
-              <div class="card-body p-2">
-                <i class="bi bi-hdd-stack-fill fs-3"></i>
-                <div class="fw-bold">{{ locker.id }}</div>
-                <span
-                  class="status-dot"
-                  :class="statusColor(locker.status)"
-                ></span>
-              </div>
-            </div>
-          </div>
+          <div class="locker-number">{{ locker.locker_number }}</div>
+          <div class="status-dot" :class="statusColor(locker.status)"></div>
         </div>
       </div>
     </div>
@@ -64,74 +28,119 @@
     <!-- Pagination -->
     <div class="d-flex justify-content-center mt-4">
       <ul class="pagination">
-        <li class="page-item">
-          <a class="page-link" href="#">Prev</a>
+        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+          <button class="page-link" @click="prevPage">Prev</button>
         </li>
-        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-        <li class="page-item"><a class="page-link" href="#">2</a></li>
-        <li class="page-item"><a class="page-link" href="#">3</a></li>
-        <li class="page-item disabled">
-          <a class="page-link" href="#">...</a>
+        <li
+          class="page-item"
+          v-for="page in totalPages"
+          :key="page"
+          :class="{ active: currentPage === page }"
+        >
+          <button class="page-link" @click="goToPage(page)">{{ page }}</button>
         </li>
-        <li class="page-item"><a class="page-link" href="#">Next</a></li>
+        <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+          <button class="page-link" @click="nextPage">Next</button>
+        </li>
       </ul>
+    </div>
+
+    <!-- Locker Modal -->
+    <div
+      v-if="selectedLocker"
+      class="modal fade show"
+      style="display: block; background: rgba(0,0,0,0.5);"
+      tabindex="-1"
+      @click.self="selectedLocker = null"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Locker {{ selectedLocker.locker_number }}</h5>
+            <button type="button" class="btn-close" @click="selectedLocker = null"></button>
+          </div>
+          <div class="modal-body">
+            <p><strong>Status:</strong> {{ selectedLocker.status }}</p>
+            <p><strong>Assigned To:</strong> {{ selectedLocker.assigned_to || 'N/A' }}</p>
+            <p><strong>Locker Number:</strong> {{ selectedLocker.locker_number }}</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import axios from "axios";
+import lockerIcon from "@/assets/locker.png"; // ✅ same pattern as sidebar
+
 export default {
-  name: 'LockerStatus',
+  name: "LockerPage",
   data() {
     return {
-      lockersA: [
-        { id: 'A1', status: 'rented' },
-        { id: 'A2', status: 'reserved' },
-        { id: 'A3', status: 'available' },
-        { id: 'A4', status: 'rented' },
-        { id: 'A5', status: 'available' },
-        { id: 'A6', status: 'rented' },
-        { id: 'A7', status: 'reserved' },
-        { id: 'A8', status: 'available' },
-        { id: 'A9', status: 'available' },
-        { id: 'A10', status: 'reserved' },
-        { id: 'A11', status: 'rented' },
-        { id: 'A12', status: 'available' }
-      ],
-      lockersB: [
-        { id: 'B1', status: 'available' },
-        { id: 'B2', status: 'rented' },
-        { id: 'B3', status: 'rented' },
-        { id: 'B4', status: 'reserved' },
-        { id: 'B5', status: 'reserved' },
-        { id: 'B6', status: 'available' },
-        { id: 'B7', status: 'rented' },
-        { id: 'B8', status: 'reserved' },
-        { id: 'B9', status: 'rented' },
-        { id: 'B10', status: 'available' },
-        { id: 'B11', status: 'rented' },
-        { id: 'B12', status: 'rented' }
-      ]
+      lockers: [],
+      selectedLocker: null,
+      currentPage: 1,
+      pageSize: 24, // only 24 lockers per page
+      lockerIcon, // make available in template
     };
   },
+  computed: {
+    totalPages() {
+      return Math.ceil(this.lockers.length / this.pageSize);
+    },
+    paginatedLockers() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      const end = start + this.pageSize;
+      return this.lockers.slice(start, end);
+    },
+  },
   methods: {
+    async fetchLockers() {
+      try {
+        const response = await axios.get("http://localhost:3001/locker/lockers");
+        this.lockers = response.data;
+      } catch (error) {
+        console.error("Error fetching lockers:", error);
+      }
+    },
     statusColor(status) {
       switch (status) {
-        case 'rented':
-          return 'bg-danger';
-        case 'reserved':
-          return 'bg-warning';
-        case 'available':
-          return 'bg-success';
+        case "rented":
+          return "bg-danger";
+        case "reserved":
+          return "bg-warning";
+        case "available":
+          return "bg-success";
         default:
-          return 'bg-secondary';
+          return "bg-secondary";
       }
-    }
-  }
+    },
+    openLocker(locker) {
+      this.selectedLocker = locker;
+    },
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    },
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
+    },
+    goToPage(page) {
+      this.currentPage = page;
+    },
+  },
+  mounted() {
+    this.fetchLockers();
+  },
 };
 </script>
 
 <style scoped>
+/* legend dots */
 .dot {
   display: inline-block;
   width: 12px;
@@ -140,10 +149,42 @@ export default {
   margin-right: 4px;
 }
 
+/* grid item */
+.locker-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* square box with icon */
+.locker-card {
+  width: 70px;
+  height: 70px;
+  border: 2px solid #000;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+}
+
+.locker-icon {
+  width: 800px;
+  height: auto;
+}
+
+/* label under box */
+.locker-number {
+  font-weight: bold;
+  margin-top: 4px;
+}
+
+/* status dot under label */
 .status-dot {
-  display: inline-block;
   width: 10px;
   height: 10px;
   border-radius: 50%;
+  margin-top: 4px;
 }
 </style>

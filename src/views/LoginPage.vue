@@ -135,7 +135,7 @@ const signIn = async () => {
   isLoading.value = true;
 
   try {
-    const response = await axios.post(`${API_BASE_URL}/user/login`, {
+    const response = await axios.post(`${API_BASE_URL}/login`, {
       username: studentId.value.trim(), // Backend expects 'username'
       password: password.value
     }, {

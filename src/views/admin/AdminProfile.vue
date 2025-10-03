@@ -17,15 +17,15 @@
         </button>
       </div>
       <div class="ms-4">
-        <h4 class="fw-bold mb-1">John Doe</h4>
-        <div class="text-muted">
-          Bachelor of Science in Information Technology
-        </div>
+        <h4 class="fw-bold mb-1">
+          {{ form.firstName }} {{ form.lastName }}
+        </h4>
+        <div class="text-muted">{{ form.course }}</div>
       </div>
     </div>
 
     <!-- Form section -->
-    <form>
+    <form @submit.prevent="updateProfile">
       <div class="row mb-3">
         <div class="col-md-6 mb-3">
           <label for="idNumber" class="form-label">ID Number:</label>
@@ -34,6 +34,7 @@
             id="idNumber"
             class="form-control"
             v-model="form.idNumber"
+            disabled
           />
         </div>
         <div class="col-md-6 mb-3">
@@ -95,22 +96,61 @@
 
       <button type="submit" class="btn btn-primary px-4">Save</button>
     </form>
+
+    <!-- Success / Error messages -->
+    <div v-if="message" class="mt-3 alert" :class="messageClass">
+      {{ message }}
+    </div>
   </div>
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   data() {
     return {
       form: {
-        idNumber: '20220001',
-        course: 'Bachelor of Science in Information Technology',
-        firstName: 'John',
-        lastName: 'Doe',
-        currentPassword: '',
-        newPassword: ''
-      }
+        idNumber: "",
+        course: "",
+        firstName: "",
+        lastName: "",
+        currentPassword: "",
+        newPassword: "",
+      },
+      message: "",
+      messageClass: "",
     };
-  }
+  },
+  async created() {
+    try {
+      // Example: get user by ID (replace with your logic or token userId)
+      const response = await axios.get("http://localhost:3001/users/20220001");
+
+      if (response.data) {
+        this.form.idNumber = response.data.idNumber;
+        this.form.course = response.data.course;
+        this.form.firstName = response.data.firstName;
+        this.form.lastName = response.data.lastName;
+      }
+    } catch (error) {
+      console.error("Error loading profile:", error);
+    }
+  },
+  methods: {
+    async updateProfile() {
+      try {
+        await axios.put(
+          `http://localhost:3001/users/${this.form.idNumber}`,
+          this.form
+        );
+        this.message = "Profile updated successfully!";
+        this.messageClass = "alert-success";
+      } catch (error) {
+        this.message = "Failed to update profile.";
+        this.messageClass = "alert-danger";
+      }
+    },
+  },
 };
 </script>

@@ -15,124 +15,103 @@
       </div>
     </div>
 
-    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-5 g-4">
-      <div class="col" v-for="(card, index) in filteredCards" :key="index">
-        <div class="card p-3 text-center">
-          <img
-            :src="card.image"
-            class="student-image mx-auto mb-2"
-            alt="Student"
-          />
-          <div class="my-2">
-            <i class="bi bi-database fs-3"></i>
-            <div class="fw-bold">{{ card.room }}</div>
-          </div>
-          <p class="mb-1">Student ID: {{ card.id }}</p>
-          <p class="mb-1">Student: {{ card.name }}</p>
-          <p class="mb-1">Reservation date: {{ card.date }}</p>
-          <p class="mb-1">Course: {{ card.course }}</p>
-          <p class="mb-3">Email: {{ card.email }}</p>
-          <div class="d-flex justify-content-center gap-2">
-            <button class="btn btn-primary btn-sm" @click="approve(card.id)">
-              Approve
-            </button>
-            <button class="btn btn-danger btn-sm" @click="cancel(card.id)">
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
+    <!-- Scrollable Table Wrapper -->
+    <div class="table-container">
+      <table class="table table-bordered table-hover align-middle text-center">
+        <thead class="table-dark">
+          <tr>
+            <th>Locker ID</th>
+            <th>Locker Number</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="locker in filteredLockers" :key="locker.locker_id">
+            <td>{{ locker.locker_id }}</td>
+            <td>{{ locker.locker_number }}</td>
+            <td>{{ locker.location }}</td>
+            <td>{{ locker.status }}</td>
+            <td>
+              <div class="d-flex justify-content-center gap-2">
+                <button
+                  class="btn btn-primary btn-sm"
+                  @click="approve(locker.locker_id)"
+                >
+                  Approve
+                </button>
+                <button
+                  class="btn btn-danger btn-sm"
+                  @click="cancel(locker.locker_id)"
+                >
+                  Cancel
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="filteredLockers.length === 0">
+            <td colspan="5" class="text-muted fst-italic">
+              No reservations found
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
-  name: 'ReservationCards',
+  name: "ReservationTable",
   data() {
     return {
-      searchQuery: '',
-      cards: [
-        {
-          id: '20230001',
-          name: 'John Doe',
-          date: '04/01/2025',
-          course: 'BSIT',
-          email: 'example@gmail.com',
-          room: 'A1',
-          image: 'https://randomuser.me/api/portraits/men/1.jpg'
-        },
-        {
-          id: '20230002',
-          name: 'Jane Smith',
-          date: '04/01/2025',
-          course: 'BSIT',
-          email: 'jane@example.com',
-          room: 'A1',
-          image: 'https://randomuser.me/api/portraits/women/2.jpg'
-        },
-        {
-          id: '20230003',
-          name: 'Mike Johnson',
-          date: '04/01/2025',
-          course: 'BSIT',
-          email: 'mike@example.com',
-          room: 'A1',
-          image: 'https://randomuser.me/api/portraits/men/3.jpg'
-        },
-        {
-          id: '20230004',
-          name: 'Anna Reyes',
-          date: '04/01/2025',
-          course: 'BSIT',
-          email: 'anna@example.com',
-          room: 'A1',
-          image: 'https://randomuser.me/api/portraits/women/4.jpg'
-        },
-        {
-          id: '20230005',
-          name: 'Leo Tan',
-          date: '04/01/2025',
-          course: 'BSIT',
-          email: 'leo@example.com',
-          room: 'A1',
-          image: 'https://randomuser.me/api/portraits/men/5.jpg'
-        }
-      ]
+      searchQuery: "",
+      lockers: []
     };
   },
   computed: {
-    filteredCards() {
+    filteredLockers() {
       const q = this.searchQuery.toLowerCase();
-      return this.cards.filter(
-        c =>
-          c.name.toLowerCase().includes(q) ||
-          c.id.toLowerCase().includes(q) ||
-          c.email.toLowerCase().includes(q) ||
-          c.course.toLowerCase().includes(q)
+      return this.lockers.filter(
+        l =>
+          l.locker_number.toString().toLowerCase().includes(q) ||
+          l.location.toLowerCase().includes(q) ||
+          l.status.toLowerCase().includes(q)
       );
     }
   },
   methods: {
-    approve(id) {
-      alert(`Approved reservation for student ID: ${id}`);
+    async fetchLockers() {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get("http://localhost:3001/locker/lockers", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        this.lockers = res.data;
+      } catch (err) {
+        console.error("Failed to fetch lockers:", err);
+      }
     },
-    cancel(id) {
-      alert(`Cancelled reservation for student ID: ${id}`);
+    approve(lockerId) {
+      alert(`Approve reservation for Locker ID: ${lockerId}`);
+    },
+    cancel(lockerId) {
+      alert(`Cancel reservation for Locker ID: ${lockerId}`);
     }
+  },
+  mounted() {
+    this.fetchLockers();
   }
 };
 </script>
 
 <style scoped>
-.student-image {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.card {
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.table-container {
+  max-height: 400px; /* 👈 adjust height to your preference */
+  overflow-y: auto;
 }
 </style>

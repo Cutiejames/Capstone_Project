@@ -1,8 +1,8 @@
 <template>
-  <div class="d-flex">
+  <div>
     <!-- Sidebar -->
     <aside
-      class="bg-dark text-white p-3 vh-100 d-flex flex-column"
+      class="bg-dark text-white p-3 position-fixed top-0 start-0 h-100 d-flex flex-column"
       :style="{
         width: isCollapsed ? '80px' : '250px',
         transition: 'width 0.3s'
@@ -112,7 +112,14 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="p-4 flex-fill bg-light w-100">
+    <main
+      class="p-4 bg-light"
+      :style="{
+        marginLeft: isCollapsed ? '80px' : '250px',
+        minHeight: '100vh',
+        overflowY: 'auto'
+      }"
+    >
       <RouterView />
     </main>
   </div>
@@ -168,3 +175,10 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* Optional styling to prevent RouterView content from touching edges */
+main {
+  transition: margin-left 0.3s ease;
+}
+</style>
