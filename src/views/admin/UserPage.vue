@@ -2,8 +2,8 @@
   <div class="container py-4">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2>Programs</h2>
-      <button class="btn btn-primary d-flex align-items-center">
+      <h2 class="fw-bold text-primary">Programs</h2>
+      <button class="btn btn-primary d-flex align-items-center shadow-sm">
         <i class="bi bi-person-plus me-2"></i> Add Student
       </button>
     </div>
@@ -11,21 +11,21 @@
     <!-- Programs Grid -->
     <div class="row g-4">
       <div v-for="program in programs" :key="program.course_id" class="col-md-3">
-        <div class="card shadow-sm h-100 text-center">
+        <div class="card shadow-sm h-100 text-center border-0">
           <div class="card-body">
-            <!-- Always placeholder for now -->
+            <!-- Program Logo -->
             <img
-              src="https://via.placeholder.com/80"
+              :src="getProgramLogo(program.acronym)"
               alt="logo"
               class="img-fluid mb-3"
               style="height: 80px"
             />
-            <h5 class="fw-bold">
+            <h5 class="fw-bold text-primary">
               {{ program.acronym || program.course_name }}
             </h5>
             <p class="text-muted small">{{ program.course_name }}</p>
             <button
-              class="btn btn-primary btn-sm"
+              class="btn btn-outline-primary btn-sm rounded-pill px-3"
               @click="fetchStudents(program.course_id, program)"
             >
               View Students
@@ -37,7 +37,7 @@
       <!-- Add new card -->
       <div class="col-md-3">
         <div
-          class="card shadow-sm h-100 d-flex justify-content-center align-items-center"
+          class="card shadow-sm h-100 d-flex justify-content-center align-items-center border-0"
           style="cursor: pointer"
         >
           <div class="display-6 text-muted">
@@ -57,20 +57,20 @@
     >
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
-          <div class="modal-header">
+          <div class="modal-header bg-primary text-white">
             <h5 class="modal-title">
               Students - {{ selectedProgram?.acronym || selectedProgram?.course_name }}
             </h5>
             <button
               type="button"
-              class="btn-close"
+              class="btn-close btn-close-white"
               data-bs-dismiss="modal"
               aria-label="Close"
             ></button>
           </div>
           <div class="modal-body">
-            <table class="table table-striped">
-              <thead>
+            <table class="table table-striped align-middle text-center">
+              <thead class="table-primary">
                 <tr>
                   <th>ID</th>
                   <th>Student ID</th>
@@ -94,7 +94,9 @@
                   </td>
                 </tr>
                 <tr v-if="students.length === 0">
-                  <td colspan="7" class="text-center">No students found</td>
+                  <td colspan="7" class="text-center text-muted">
+                    No students found
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -108,6 +110,13 @@
 <script>
 import axios from "axios";
 import { Modal } from "bootstrap";
+
+// ✅ Correct case-sensitive imports (match your file names)
+import bshmLogo from "@/assets/BSHM.png";
+import bsitLogo from "@/assets/BSIT.png";
+import bsedLogo from "@/assets/BSED.png";
+import beedLogo from "@/assets/BEED.png";
+import defaultLogo from "@/assets/logo.png"; // fallback
 
 export default {
   data() {
@@ -138,7 +147,6 @@ export default {
         );
         this.students = res.data.students || [];
 
-        // show modal
         if (!this.modalInstance) {
           this.modalInstance = new Modal(this.$refs.studentsModal);
         }
@@ -147,13 +155,39 @@ export default {
         console.error("Error fetching students:", err);
       }
     },
+    // ✅ Select logo based on acronym
+    getProgramLogo(acronym) {
+      const map = {
+        BSHM: bshmLogo,
+        BSIT: bsitLogo,
+        BSED: bsedLogo,
+        BEED: beedLogo,
+      };
+      return map[acronym?.toUpperCase()] || defaultLogo;
+    },
   },
 };
 </script>
 
 <style scoped>
+.card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
 .card:hover {
-  transform: scale(1.02);
-  transition: 0.2s ease-in-out;
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(13, 110, 253, 0.2);
+}
+
+.modal-header {
+  border-bottom: none;
+}
+
+.table th,
+.table td {
+  vertical-align: middle;
+}
+
+.btn-outline-primary:hover {
+  color: white;
 }
 </style>

@@ -1,21 +1,24 @@
 <template>
   <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2>RESERVATION DETAILS</h2>
-      <div class="input-group" style="width: 250px">
+    <h2 class="text-center fw-bold mb-4">RESERVATION DETAILS</h2>
+
+    <!-- 🔍 Search Bar -->
+    <div class="d-flex justify-content-center mb-4">
+      <div class="input-group" style="width: 350px">
         <input
           v-model="searchQuery"
           type="text"
           class="form-control"
-          placeholder="Search for..."
+          placeholder="Search by Locker No., Location, or Status..."
+          @keyup.enter="fetchLockers"
         />
-        <button class="btn btn-primary">
+        <button class="btn btn-primary" @click="fetchLockers">
           <i class="bi bi-search"></i>
         </button>
       </div>
     </div>
 
-    <!-- Scrollable Table Wrapper -->
+    <!-- 🧾 Table -->
     <div class="table-container">
       <table class="table table-bordered table-hover align-middle text-center">
         <thead class="table-dark">
@@ -32,17 +35,30 @@
             <td>{{ locker.locker_id }}</td>
             <td>{{ locker.locker_number }}</td>
             <td>{{ locker.location }}</td>
-            <td>{{ locker.status }}</td>
+            <td>
+              <span
+                :class="[
+                  'badge',
+                  locker.status === 'Available'
+                    ? 'bg-success'
+                    : locker.status === 'Reserved'
+                    ? 'bg-warning text-dark'
+                    : 'bg-danger'
+                ]"
+              >
+                {{ locker.status }}
+              </span>
+            </td>
             <td>
               <div class="d-flex justify-content-center gap-2">
                 <button
-                  class="btn btn-primary btn-sm"
+                  class="btn btn-primary btn-sm px-3"
                   @click="approve(locker.locker_id)"
                 >
                   Approve
                 </button>
                 <button
-                  class="btn btn-danger btn-sm"
+                  class="btn btn-danger btn-sm px-3"
                   @click="cancel(locker.locker_id)"
                 >
                   Cancel
@@ -61,57 +77,96 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from "vue";
 import axios from "axios";
 
-export default {
-  name: "ReservationTable",
-  data() {
-    return {
-      searchQuery: "",
-      lockers: []
-    };
-  },
-  computed: {
-    filteredLockers() {
-      const q = this.searchQuery.toLowerCase();
-      return this.lockers.filter(
-        l =>
-          l.locker_number.toString().toLowerCase().includes(q) ||
-          l.location.toLowerCase().includes(q) ||
-          l.status.toLowerCase().includes(q)
-      );
-    }
-  },
-  methods: {
-    async fetchLockers() {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:3001/locker/lockers", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+const lockers = ref([]);
+const searchQuery = ref("");
 
-        this.lockers = res.data;
-      } catch (err) {
-        console.error("Failed to fetch lockers:", err);
-      }
-    },
-    approve(lockerId) {
-      alert(`Approve reservation for Locker ID: ${lockerId}`);
-    },
-    cancel(lockerId) {
-      alert(`Cancel reservation for Locker ID: ${lockerId}`);
-    }
-  },
-  mounted() {
-    this.fetchLockers();
+// Fetch lockers from backend
+const fetchLockers = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await axios.get("http://localhost:3001/locker/lockers", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    lockers.value = res.data;
+  } catch (err) {
+    console.error("Failed to fetch lockers:", err);
   }
 };
+
+// Computed search filter
+const filteredLockers = computed(() => {
+  const q = searchQuery.value.toLowerCase();
+  return lockers.value.filter(
+    (l) =>
+      l.locker_number.toString().toLowerCase().includes(q) ||
+      l.location.toLowerCase().includes(q) ||
+      l.status.toLowerCase().includes(q)
+  );
+});
+
+// Approve and Cancel (mock)
+const approve = (lockerId) => {
+  alert(`✅ Approve reservation for Locker ID: ${lockerId}`);
+};
+const cancel = (lockerId) => {
+  alert(`❌ Cancel reservation for Locker ID: ${lockerId}`);
+};
+
+onMounted(fetchLockers);
 </script>
 
 <style scoped>
 .table-container {
-  max-height: 400px; /* 👈 adjust height to your preference */
+  max-height: 600px;
   overflow-y: auto;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Table style */
+table {
+  font-size: 16px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+table th,
+table td {
+  padding: 14px 12px;
+  vertical-align: middle;
+}
+
+/* Header styling */
+thead th {
+  background-color: #0d6efd;
+  color: white;
+  font-weight: 600;
+}
+
+/* Zebra striping */
+tbody tr:nth-child(odd) {
+  background-color: #f9f9f9;
+}
+
+/* Hover effect */
+tbody tr:hover {
+  background-color: #eef6ff;
+  transition: background-color 0.2s ease-in-out;
+}
+
+/* Scrollbar */
+.table-container::-webkit-scrollbar {
+  width: 10px;
+}
+.table-container::-webkit-scrollbar-thumb {
+  background-color: #bbb;
+  border-radius: 10px;
+}
+.table-container::-webkit-scrollbar-thumb:hover {
+  background-color: #888;
 }
 </style>

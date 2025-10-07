@@ -3,10 +3,7 @@
     <!-- Sidebar -->
     <aside
       class="bg-dark text-white p-3 vh-100 d-flex flex-column"
-      :style="{
-        width: isCollapsed ? '80px' : '250px',
-        transition: 'width 0.3s'
-      }"
+      :style="{ width: isCollapsed ? '80px' : '250px', transition: 'width 0.3s' }"
     >
       <!-- Logo + Brand -->
       <div class="d-flex align-items-center mb-4">
@@ -119,13 +116,7 @@
             <div>{{ user?.f_name || "Loading..." }}</div>
             <div class="fst-italic small">{{ user?.course_name }}</div>
           </div>
-          <img
-            :src="user?.profile_pic || 'default-profile.jpg'"
-            alt="Profile"
-            class="rounded-circle"
-            width="40"
-            height="40"
-          />
+          <!-- Removed profile picture -->
         </div>
       </div>
 
@@ -135,11 +126,10 @@
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
-import axios from "axios";
-import { useRouter } from "vue-router";
+import { useLogout } from "@/composables/useLogout";
+import { ref } from "vue";
 
-// ✅ Import images
+// Import assets
 import logo from "@/assets/cpc-logo.jpg";
 import brandIcon from "@/assets/hamburger.png";
 import lockerIcon from "@/assets/locker.png";
@@ -152,7 +142,6 @@ export default {
   setup() {
     const isCollapsed = ref(false);
     const user = ref(null);
-    const router = useRouter();
 
     const toggleSidebar = () => {
       isCollapsed.value = !isCollapsed.value;
@@ -164,38 +153,7 @@ export default {
       { label: "Support", path: "/dashboard/user-support", img: supportIcon },
     ];
 
-    const fetchUserDashboard = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:3001/user/dashboard", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        user.value = res.data.user;
-      } catch (error) {
-        console.error("Error fetching user dashboard:", error);
-      }
-    };
-
-    // ✅ Updated logout method to call backend controller
-    const logout = async () => {
-      try {
-        const token = localStorage.getItem("token");
-
-        await axios.post("http://localhost:3001/auth/logout", {}, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        localStorage.removeItem("token");
-        router.push("/login");
-      } catch (error) {
-        console.error("Error during logout:", error);
-        // still clear token if backend fails
-        localStorage.removeItem("token");
-        router.push("/login");
-      }
-    };
-
-    onMounted(fetchUserDashboard);
+    const { logout } = useLogout();
 
     return {
       logo,

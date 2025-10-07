@@ -3,9 +3,9 @@
     <h2 class="text-center fw-bold mb-4">RENT STATUS</h2>
 
     <!-- Search + Sort Controls -->
-    <div class="d-flex flex-wrap gap-3 mb-3">
+    <div class="d-flex flex-wrap gap-3 mb-3 justify-content-center">
       <!-- Search -->
-      <div class="input-group" style="width: 250px">
+      <div class="input-group" style="width: 300px">
         <input
           v-model="searchQuery"
           type="text"
@@ -19,7 +19,7 @@
       </div>
 
       <!-- Sort -->
-      <div class="input-group" style="width: 250px">
+      <div class="input-group" style="width: 300px">
         <label class="input-group-text">Sort By</label>
         <select v-model="sortBy" class="form-select" @change="fetchRentals">
           <option value="due_date">Due Date</option>
@@ -113,7 +113,52 @@ onMounted(fetchRentals)
 
 <style scoped>
 .table-container {
-  max-height: 400px;
+  max-height: 600px; /* bigger table height */
   overflow-y: auto;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Larger and cleaner table style */
+table {
+  font-size: 16px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+table th,
+table td {
+  padding: 14px 12px;
+  vertical-align: middle;
+}
+
+/* Header styling */
+thead th {
+  background-color: #0d6efd;
+  color: white;
+  font-weight: 600;
+}
+
+/* Zebra striping */
+tbody tr:nth-child(odd) {
+  background-color: #f9f9f9;
+}
+
+/* Hover effect */
+tbody tr:hover {
+  background-color: #eef6ff;
+  transition: background-color 0.2s ease-in-out;
+}
+
+/* Scrollbar customization */
+.table-container::-webkit-scrollbar {
+  width: 10px;
+}
+.table-container::-webkit-scrollbar-thumb {
+  background-color: #bbb;
+  border-radius: 10px;
+}
+.table-container::-webkit-scrollbar-thumb:hover {
+  background-color: #888;
 }
 </style>
